@@ -1,4 +1,5 @@
 from simple_bruteforce_classifiation import * 
+from ssh_feature_engineering import*
 from pathlib import Path
 
 
@@ -17,7 +18,17 @@ def preprocess_data(bruteforce_df):
 
 
 def main():
-    bruteforce_data = Path('../data/ip_bruteforce_summary.json')
+
+    input_file = input('Enter data file NAME: ')
+
+    # Find input file in repo
+    root = Path.cwd().resolve().parent
+    
+    # Input log file
+    input_path = find_conn_log(root, input_file)
+    print(f"Using conn.log at: {input_path}")
+
+    bruteforce_data = Path(input_path)
 
     # Convert json data to Dataframe format
     bruteforce_df = pd.read_json(bruteforce_data)
