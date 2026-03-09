@@ -1,5 +1,5 @@
-from simple_bruteforce_classifiation import * 
-from ssh_feature_engineering import*
+from ssh_feature_engineering import find_conn_log
+from simple_bruteforce_classifiation import *
 from pathlib import Path
 
 
