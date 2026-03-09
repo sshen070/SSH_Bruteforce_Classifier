@@ -1,77 +1,96 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sb
-import random as rand
-
-from sklearn.cluster import KMeans
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+
+from mpl_toolkits.mplot3d import Axes3D
 
 
-def original_ssh_activity_classifier(bruteforce_df):
-    features_df = bruteforce_df[['total_conn', 'conn_fail_ratio']]
-    # print(features_df.head())
-
-    # Run Kmeans to clusters for data 
-    k_means = KMeans(n_clusters=4, random_state=0, n_init="auto").fit(features_df)
-    # print(k_means.labels_)
-    # bruteforce_df['cluster'] = k_means.labels_
-
-    return features_df.values, k_means
-
-
-def ssh_activity_classifier(bruteforce_df):
-    features_df = bruteforce_df[['total_conn', 'conn_fail_ratio']]
-    # print(features_df.head())
+def ssh_activity_classifier(features_unscaled, n_clusters=4):
+    # features_df = bruteforce_df[['conn_fail_ratio', 'mean_orig_pkts', 'pkt_consistency', 'dest_ip_ratio']]
 
     # Scale data (> total_conn values will skew clustering)
     scaled_features = StandardScaler()
-    features_scaled = scaled_features.fit_transform(features_df)
-    print(features_scaled[0:5])
-
-    # # Converts scaled features into two components
-    # pca = PCA(n_components=2)
-    # features_pca = pca.fit_transform(features_scaled)
-    # print(features_pca[0:5])
+    features_scaled = scaled_features.fit_transform(features_unscaled)
 
     # Run Kmeans to clusters for data 
-    k_means = KMeans(n_clusters=4, random_state=0, n_init="auto").fit(features_scaled)
-    # print(k_means.labels_)
-    bruteforce_df['cluster'] = k_means.labels_
+    k_means = KMeans(n_clusters, random_state=0, n_init="auto").fit(features_scaled)
 
     return features_scaled, k_means
 
 
-def visualize_ssh_activity(features_scaled, k_means, scaled=False):
-    plt.figure(figsize=(8,6))
-    plt.scatter(
+def feature_selection(n_features):
+    # Store all combinations of 3 features selected
+    feature_combinations = []
 
-        # features_df['total_conn'], 
-        # features_df['conn_fail_ratio'], 
-        # c=bruteforce_df['cluster'],
+    for i in range(len(n_features)):
+        feature_set = []
+        for j in range(len(n_features)):
+            if i == j:
+                continue
+            feature_set.append(j)
+        feature_combinations.append(feature_set)
 
-        features_scaled[:, 0],
-        features_scaled[:, 1], 
-        c=k_means.labels_,
-        cmap='viridis',               
-        alpha=0.7
-    )
+    return feature_combinations
 
-    if (scaled):
-        # Number of attempts
-        plt.xlabel('Scaled Total Connections')
+def visualize_ssh_activity(features_scaled, feature_names, k_means, pca=False):
 
-        # SSH Bruteforce Failure Ratio
-        plt.ylabel('Scaled Failure Ratio')
-        plt.title('KMeans Clustering of SSH Bruteforce Activity')
-        plt.legend()
+    # # Run all possible combinations of selected features
+    # feature_combinations = feature_selection(features_scaled)
+
+    # 3d plot with no PCA (3 features)
+    fig = plt.figure(figsize=(8,6))
+    ax = fig.add_subplot(111, projection='3d')
+
+    x = features_scaled[:,0]
+    y = features_scaled[:,1]
+    z = features_scaled[:,2]
+    c = k_means.labels_
+
+    scatter = ax.scatter(x, y, z, c=c, cmap='viridis', alpha=0.7)
+
+    ax.set_xlabel(feature_names[0])
+    ax.set_ylabel(feature_names[1])
+    ax.set_zlabel(feature_names[2])
+    ax.set_title('SSH Bruteforce Activity (3D Clustering)')
+    
+    fig.colorbar(scatter, label='Cluster')
+    plt.show()
+
+
+    # fig = plt.figure(figsize=(8,6))
+    # ax = fig.add_subplot(111, projection='3d')
+
+    # x = features_scaled[:,0]  # conn_fail_ratio
+    # y = features_scaled[:,1]  # pkt_consistency
+    # z = features_scaled[:,2]  # dest_ip_ratio
+    # c = k_means.labels_       # color by cluster
+
+    # scatter = ax.scatter(x, y, z, c=c, cmap='viridis', alpha=0.7)
+    # ax.set_xlabel('Connection Failure Ratio')
+    # ax.set_ylabel('Packet Consistency')
+    # ax.set_zlabel('Destination IP Ratio')
+    # ax.set_title('SSH Bruteforce Activity (3D Clustering)')
+    
+    # fig.colorbar(scatter, label='Cluster')
+    # plt.show()
+
+    # Representing in 2d
+    if pca:
+        pca_model = PCA(n_components=2)
+        features_pca = pca_model.fit_transform(features_scaled)
+        plt.figure(figsize=(8,6))
+        scatter = plt.scatter(
+            features_pca[:,0],
+            features_pca[:,1],
+            c=k_means.labels_,
+            cmap='viridis',
+            alpha=0.7
+        )
+        plt.xlabel('PCA Component 1')
+        plt.ylabel('PCA Component 2')
+        plt.title('SSH Bruteforce Activity (2D PCA)')
+        plt.colorbar(scatter, label='Cluster')
         plt.show()
-        
-    else:
-        plt.xlabel('Total Connections')
-        plt.ylabel('SSH Bruteforce Failure Ratio')
-        plt.title('KMeans Clustering of SSH Bruteforce Activity')
-        plt.legend()
-        plt.show()
-

@@ -18,7 +18,6 @@ def preprocess_data(bruteforce_df):
 
 
 def main():
-
     input_file = input('Enter data file NAME: ')
 
     # Find input file in repo
@@ -28,24 +27,30 @@ def main():
     input_path = find_conn_log(root, input_file)
     print(f"Using conn.log at: {input_path}")
 
-    bruteforce_data = Path(input_path)
-
     # Convert json data to Dataframe format
-    bruteforce_df = pd.read_json(bruteforce_data)
+    bruteforce_df = pd.read_json(input_path)
 
-    user_input = int(input('Preprocess? '))
+    # user_input = int(input('Preprocess? '))
 
-    if (user_input):
-        # Preprocessing (Remove outliers)
-        bruteforce_df = preprocess_data(bruteforce_df)
+    # if (user_input):
+    #     # Preprocessing (Remove outliers)
+    #     bruteforce_df = preprocess_data(bruteforce_df)
 
-    # Data unchanged (No scaling/PCA) 
-    features_df, k_means = original_ssh_activity_classifier(bruteforce_df)
-    visualize_ssh_activity(features_df, k_means)
+    # Define all features
+    all_features = ['conn_fail_ratio', 'mean_orig_pkts', 'pkt_consistency', 'dest_ip_ratio']
 
-    # Scaled data ~ No PCA
-    features_scaled, k_means = ssh_activity_classifier(bruteforce_df)
-    visualize_ssh_activity(features_scaled, k_means, True)
+    # Generate 3-feature combinations
+    features_selection_arr = feature_selection(all_features)
+
+    for idx, feature_combo in enumerate(features_selection_arr):
+        feature_names = []
+        for j in feature_combo:
+            feature_names.append(all_features[j])
+
+        # Scaled data ~ No PCA
+        features_scaled, k_means = ssh_activity_classifier(bruteforce_df[feature_names])
+
+        visualize_ssh_activity(features_scaled, feature_names, k_means, True)
 
 
 if __name__ == "__main__":
