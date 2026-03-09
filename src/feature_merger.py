@@ -32,7 +32,6 @@ def merge_features(files_arr):
 
 
 def main():
-
     num_files = int(input("How many JSON files to merge? "))
     try:
         files_arr = []
