@@ -79,9 +79,6 @@ def pkt_consistency(input_path, output_path):
 
     ip_pkts = defaultdict(list)
 
-    # Use set to track if number of destination ip (set hashes dest ips & can check if ip exists in O(1)) 
-    ip_dests = defaultdict(set)
-
     # Collect packet counts per IP
     with open(input_path, "r") as f:
         for line in f:
@@ -92,15 +89,11 @@ def pkt_consistency(input_path, output_path):
 
             ip = entry.get("id.orig_h")
             pkts = entry.get("orig_pkts")
-            dest = entry.get("id.resp_h")
 
             if ip is None or pkts is None:
                 continue
 
             ip_pkts[ip].append(pkts)
-
-            if dest:
-                ip_dests[ip].add(dest)
 
     ip_consistency = []
 
@@ -117,17 +110,12 @@ def pkt_consistency(input_path, output_path):
 
         consistency = std_val / mean_val if mean_val > 0 else 0
 
-        unique_dest = len(ip_dests[ip])  
-        dest_ip_ratio = len(ip_dests[ip])/len(pkt_list)
-
         ip_consistency.append({
             "ip": ip,
             "mean_orig_pkts": mean_val,
             "std_orig_pkts": std_val,
             "pkt_consistency": consistency,
-            "unique_dest" : unique_dest,
-            "conn_count": len(pkt_list),
-            "dest_ip_ratio": dest_ip_ratio
+            "total_conn": len(pkt_list),
         })
 
     # Sort by pkt_consistency descending
@@ -139,9 +127,58 @@ def pkt_consistency(input_path, output_path):
 
     print(f"Summary written to {output_path}")
 
+
+def dest_ip_features(input_path, output_path):
+
+    ip_total = defaultdict(int)
+
+    # Use set to track if number of destination ip (set hashes dest ips & can check if ip exists in O(1)) 
+    ip_dests = defaultdict(set)
+
+    with open(input_path, "r") as f:
+        for line in f:
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            ip = entry.get("id.orig_h")
+            dest = entry.get("id.resp_h")
+
+            if not ip:
+                continue
+
+            ip_total[ip] += 1
+
+            if dest:
+                ip_dests[ip].add(dest)
+
+    results = []
+
+    for ip in ip_total:
+
+        total_conn = ip_total[ip]
+        unique_dest = len(ip_dests[ip])
+
+        dest_ratio = unique_dest / total_conn if total_conn > 0 else 0
+
+        results.append({
+            "ip": ip,
+            "unique_dest_ips": unique_dest,
+            "dest_ip_ratio": dest_ratio,
+            "total_conn": total_conn
+        })
+
+    results.sort(key=lambda x: x["unique_dest_ips"], reverse=True)
+
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+
+    print(f"Summary written to {output_path}")
+
 if __name__ == "__main__":
 
-    user_input = int(input('conn_fail_ratio (1), pkt_consistency (2): '))
+    user_input = int(input('conn_fail_ratio (1), pkt_consistency (2), dest_ip_features (3): '))
     input_file = input('Enter input file NAME: ')
 
     # Find input file in repo
@@ -155,8 +192,15 @@ if __name__ == "__main__":
     output_file = input('Enter output file NAME: ').strip()
     output_path = Path('../data/ip_bruteforce_summary_logs') / output_file
 
-    if (user_input == 1):
-        conn_fail_ratio(input_path, output_path)
+    try:
+        if (user_input == 1):
+            conn_fail_ratio(input_path, output_path)
 
-    if (user_input == 2):
-        pkt_consistency(input_path, output_path)
+        elif (user_input == 2):
+            pkt_consistency(input_path, output_path)
+
+        elif (user_input == 3):
+            dest_ip_features(input_path, output_path)
+
+    except:
+        print('ERROR')
