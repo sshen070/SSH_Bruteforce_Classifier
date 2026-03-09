@@ -176,7 +176,7 @@ def dest_ip_features(input_path, output_path):
 
     print(f"Summary written to {output_path}")
 
-if __name__ == "__main__":
+def main():
 
     user_input = int(input('conn_fail_ratio (1), pkt_consistency (2), dest_ip_features (3): '))
     input_file = input('Enter input file NAME: ')
@@ -204,3 +204,7 @@ if __name__ == "__main__":
 
     except:
         print('ERROR')
+
+
+if __name__ == "__main__":
+    main()
