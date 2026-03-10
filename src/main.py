@@ -4,17 +4,18 @@ from pathlib import Path
 
 
 def preprocess_data(bruteforce_df):
-    # # Basic statistics of dataset
-    # Q1 = bruteforce_df['total_conn'].quantile(0.25)
-    # Q3 = bruteforce_df['total_conn'].quantile(0.75)
-    # IQR = Q3 - Q1
+    # Only compute upper bound
+    upper_bound = bruteforce_df['pkt_consistency'].quantile(0.99)
 
-    # upper_bound = Q3 + 1.5 * IQR
+    # Remove only extreme high outliers
+    filtered_df = bruteforce_df[bruteforce_df['pkt_consistency'] <= upper_bound]
 
-    # # Remove any outliers that will skew the clustering towards outliers (number of connections)
-    # return bruteforce_df[(bruteforce_df['total_conn'] <= upper_bound)]
 
-    return bruteforce_df[bruteforce_df['total_conn'] < 10000]
+    print("Original size:", len(bruteforce_df))
+    print("Filtered size:", len(filtered_df))
+    print("Upper bound:", upper_bound)
+
+    return filtered_df
 
 
 def main():
@@ -30,11 +31,11 @@ def main():
     # Convert json data to Dataframe format
     bruteforce_df = pd.read_json(input_path)
 
-    # user_input = int(input('Preprocess? '))
+    user_input = int(input('Preprocess? '))
 
-    # if (user_input):
-    #     # Preprocessing (Remove outliers)
-    #     bruteforce_df = preprocess_data(bruteforce_df)
+    if (user_input):
+        # Preprocessing (Remove outliers)
+        bruteforce_df = preprocess_data(bruteforce_df)
 
     # Define all features
     all_features = ['conn_fail_ratio', 'mean_orig_pkts', 'pkt_consistency', 'dest_ip_ratio']
