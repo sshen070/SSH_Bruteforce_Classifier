@@ -1,6 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
@@ -8,14 +10,14 @@ from sklearn.cluster import KMeans
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def ssh_activity_classifier(features_unscaled, n_clusters=4):
+def ssh_activity_clustering(features_unscaled, n_clusters=4):
     # features_df = bruteforce_df[['conn_fail_ratio', 'mean_orig_pkts', 'pkt_consistency', 'dest_ip_ratio']]
 
     # Scale data (> total_conn values will skew clustering)
     scaled_features = StandardScaler()
     features_scaled = scaled_features.fit_transform(features_unscaled)
 
-    # Run Kmeans to clusters for data 
+    # Run Kmeans to clusters for data
     k_means = KMeans(n_clusters, random_state=0, n_init="auto").fit(features_scaled)
 
     return features_scaled, k_means
@@ -34,6 +36,7 @@ def feature_selection(n_features):
         feature_combinations.append(feature_set)
 
     return feature_combinations
+
 
 def visualize_ssh_activity(features_scaled, feature_names, k_means, pca=False):
 
@@ -94,3 +97,29 @@ def visualize_ssh_activity(features_scaled, feature_names, k_means, pca=False):
         plt.title('SSH Bruteforce Activity (2D PCA)')
         plt.colorbar(scatter, label='Cluster')
         plt.show()
+
+
+def separate_clusters_df(bruteforce_df, k_means):
+
+    bruteforce_df = bruteforce_df.copy()
+    bruteforce_df["cluster"] = k_means.labels_
+
+    cluster_1 = bruteforce_df[bruteforce_df["cluster"] == 0]
+    cluster_2 = bruteforce_df[bruteforce_df["cluster"] == 1]
+    cluster_3 = bruteforce_df[bruteforce_df["cluster"] == 2]
+    cluster_4 = bruteforce_df[bruteforce_df["cluster"] == 3]
+
+    return [cluster_1, cluster_2, cluster_3, cluster_4]
+
+
+def save_clusters(clusters, idx):
+
+    output_dir = Path("../data/feature_selection_clusters")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for i, cluster_df in enumerate(clusters):
+        # Print cluster details
+        print(f"Cluster {i+1} size:", len(cluster_df))
+
+        output_file = output_dir / f"feature_set_{idx}_cluster_{i+1}.json"
+        cluster_df.to_json(output_file, orient="records", lines=True)

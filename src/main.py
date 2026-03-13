@@ -49,9 +49,14 @@ def main():
             feature_names.append(all_features[j])
 
         # Scaled data ~ No PCA
-        features_scaled, k_means = ssh_activity_classifier(bruteforce_df[feature_names])
+        features_scaled, k_means = ssh_activity_clustering(bruteforce_df[feature_names])
 
         visualize_ssh_activity(features_scaled, feature_names, k_means, True)
+
+        if (idx == 1):
+            cluster_set = separate_clusters_df(bruteforce_df, k_means)
+            save_clusters(cluster_set, idx)
+
 
 
 if __name__ == "__main__":
