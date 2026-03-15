@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+import seaborn as sns
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -39,7 +40,6 @@ def feature_selection(n_features):
 
 
 def visualize_ssh_activity(features_scaled, feature_names, k_means, pca=False):
-
     # # Run all possible combinations of selected features
     # feature_combinations = feature_selection(features_scaled)
 
@@ -121,5 +121,86 @@ def save_clusters(clusters, idx):
         # Print cluster details
         print(f"Cluster {i+1} size:", len(cluster_df))
 
-        output_file = output_dir / f"feature_set_{idx}_cluster_{i+1}.json"
+        output_file = output_dir / f"feature_set_{idx}_cluster_{i}.json"
         cluster_df.to_json(output_file, orient="records", lines=True)
+
+# from sklearn.ensemble import RandomForestClassifier
+# from sklearn.metrics import classification_report, confusion_matrix
+# from sklearn.model_selection import train_test_split
+
+
+
+# def train_attack_classifier(cluster_set, feature_names):
+
+#     labeled_clusters = []
+
+#     # Label clusters (cluster 3 = attack)
+#     for i, cluster_df in enumerate(cluster_set):
+
+#         cluster_df = cluster_df.copy()
+
+#         if i == 2:  # cluster 3 (index 2)
+#             cluster_df["attack"] = 1
+#         else:
+#             cluster_df["attack"] = 0
+
+#         labeled_clusters.append(cluster_df)
+
+#     # Combine clusters
+#     df = pd.concat(labeled_clusters, ignore_index=True)
+
+#     # Show class distribution
+#     print("\nClass Distribution:")
+#     print(df["attack"].value_counts())
+
+#     # Feature matrix and labels
+#     X = df[feature_names]
+#     y = df["attack"]
+
+#     # Scale features
+#     scaler = StandardScaler()
+#     X_scaled = scaler.fit_transform(X)
+
+#     # Stratified train/test split
+#     X_train, X_test, y_train, y_test = train_test_split(
+#         X_scaled,
+#         y,
+#         test_size=0.2,
+#         stratify=y,     # <-- key change
+#         random_state=42
+#     )
+
+#     # Train classifier
+#     model = RandomForestClassifier(random_state=42, class_weight='balanced')
+#     model.fit(X_train, y_train)
+
+#     # Predictions
+#     preds = model.predict(X_test)
+
+#     # Evaluation
+#     print("\nClassifier Performance:")
+#     print(classification_report(y_test, preds))
+
+#     print("Confusion Matrix:")
+#     print(confusion_matrix(y_test, preds))
+
+#     return model, scaler
+
+def cluster_heatmap(df, k_means, feature_names):
+
+    df = df.copy()
+    df["cluster"] = k_means.labels_
+
+    cluster_stats = df.groupby("cluster")[feature_names].mean()
+
+    plt.figure(figsize=(8,6))
+
+    sns.heatmap(
+        cluster_stats,
+        annot=True,
+        cmap="viridis"
+    )
+
+    plt.title("Cluster Feature Averages")
+    plt.show()
+
