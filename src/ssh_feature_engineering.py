@@ -12,7 +12,7 @@ def find_conn_log(root: Path, log_name: str) -> Path:
 # Accept JSON file with set of connections --> Create JSON file containing SSH connection-fail ratio & other details
 def conn_fail_ratio(input_path, output_path):
     # Dictionary to hold IP stats
-    ip_stats = defaultdict(lambda: {"total": 0, "suspicious": 0, "benign": 0})
+    ip_stats = defaultdict(lambda: {"total": 0, "suspicious": 0, "benign": 0, "neutral": 0})
 
     # Try to load as standard JSON
     try:
@@ -48,18 +48,31 @@ def conn_fail_ratio(input_path, output_path):
         else:
             ip_stats[ip]["benign"] += 1
 
+        # ip_stats[ip]["total"] += 1
+        # if conn_state in {"RSTR", "RSTO"}:
+        #     ip_stats[ip]["suspicious"] += 1
+        # elif conn_state in {"SF"}:
+        #     ip_stats[ip]["benign"] += 1
+        # elif conn_state in {"S0", "SH"} and orig_bytes > 1000:
+        #     ip_stats[ip]["benign"] += 1
+        # else:
+        #     ip_stats[ip]["neutral"] += 1
+
+
     # Prepare summary
     summary = []
     for ip, stats in ip_stats.items():
         total = stats["total"]
         suspicious = stats["suspicious"]
         benign = stats["benign"]
+        neutral = stats["neutral"]
         ratio = suspicious / total if total > 0 else 0
         summary.append({
             "ip": ip,
             "total_conn": total,
             "suspicious": suspicious,
             "benign": benign,
+            "neutral": neutral,
             "conn_fail_ratio": ratio
         })
 
@@ -192,18 +205,14 @@ def main():
     output_file = input('Enter output file NAME: ').strip()
     output_path = Path('../data/ip_bruteforce_summary_logs') / output_file
 
-    try:
-        if (user_input == 1):
-            conn_fail_ratio(input_path, output_path)
+    if (user_input == 1):
+        conn_fail_ratio(input_path, output_path)
 
-        elif (user_input == 2):
-            pkt_consistency(input_path, output_path)
+    elif (user_input == 2):
+        pkt_consistency(input_path, output_path)
 
-        elif (user_input == 3):
-            dest_ip_features(input_path, output_path)
-
-    except:
-        print('ERROR')
+    elif (user_input == 3):
+        dest_ip_features(input_path, output_path)
 
 
 if __name__ == "__main__":
