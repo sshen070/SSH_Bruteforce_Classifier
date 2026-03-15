@@ -39,7 +39,7 @@ def main():
 
     # Define all features
     all_features = ['conn_fail_ratio', 'mean_orig_pkts', 'pkt_consistency', 'dest_ip_ratio']
-
+    
     # Generate 3-feature combinations
     features_selection_arr = feature_selection(all_features)
 
@@ -51,12 +51,15 @@ def main():
         # Scaled data ~ No PCA
         features_scaled, k_means = ssh_activity_clustering(bruteforce_df[feature_names])
 
-        visualize_ssh_activity(features_scaled, feature_names, k_means, True)
+        # visualize_ssh_activity(features_scaled, feature_names, k_means, True)
 
         if (idx == 1):
             cluster_set = separate_clusters_df(bruteforce_df, k_means)
             save_clusters(cluster_set, idx)
+            visualize_ssh_activity(features_scaled, feature_names, k_means, True)
+            cluster_heatmap(bruteforce_df, k_means, all_features)
 
+            # model, scaler = train_attack_classifier(cluster_set, feature_names)
 
 
 if __name__ == "__main__":
