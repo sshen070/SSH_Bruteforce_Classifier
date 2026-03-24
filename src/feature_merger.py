@@ -48,7 +48,7 @@ def main():
 
         # Ask user for output file names
         output_json = input("Enter name for output JSON file: ")
-        output_path = Path('../data/ip_bruteforce_summary_logs') / output_json
+        output_path = Path('../output/ip_bruteforce_summary') / output_json
 
         # Save merged dataset
         merged_df.to_json(output_path, orient="records", indent=2)

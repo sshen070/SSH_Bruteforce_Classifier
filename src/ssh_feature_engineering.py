@@ -203,7 +203,7 @@ def main():
 
     # Output summary file
     output_file = input('Enter output file NAME: ').strip()
-    output_path = Path('../data/ip_bruteforce_summary_logs') / output_file
+    output_path = Path('../output/ip_bruteforce_summary') / output_file
 
     if (user_input == 1):
         conn_fail_ratio(input_path, output_path)
