@@ -1,5 +1,4 @@
 /venv
-/data/conn_failure_logs
 /data/feature_engineering_logs
 /data/ssh_failure_logs
 data/Zeek_logs/
